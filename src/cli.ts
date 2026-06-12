@@ -2,6 +2,7 @@ import { startMcpServer } from "./mcp.js";
 import { runNotifyHook } from "./notify-hook.js";
 import { runSetup } from "./setup.js";
 import { startServer } from "./server.js";
+import { runTranscript } from "./transcript-cli.js";
 
 const DEFAULT_PORT = 3847;
 
@@ -51,9 +52,13 @@ async function main() {
       await runSetup(process.argv.slice(3));
       break;
     }
+    case "transcript": {
+      await runTranscript();
+      break;
+    }
     default:
       console.error(`Unknown command: ${command}`);
-      console.error("Usage: node dist/cli.js [server|mcp|notify|setup]");
+      console.error("Usage: node dist/cli.js [server|mcp|notify|setup|transcript]");
       process.exit(1);
   }
 }

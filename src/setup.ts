@@ -233,5 +233,5 @@ export async function runSetup(argv: string[]): Promise<void> {
   } else {
     console.log("3. Person A creates a room → shares 6-char code → Person B joins");
   }
-  console.log("4. Chat via agent using send_message / read_messages\n");
+  console.log("4. Open .cursor/agent-room-transcript.md to read chat as a human\n");
 }

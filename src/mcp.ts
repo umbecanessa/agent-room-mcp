@@ -8,6 +8,7 @@ import {
   updateLastReadAt,
   writeState,
 } from "./state.js";
+import { appendMessagesToTranscript } from "./transcript.js";
 import type { Message } from "./types.js";
 
 const DEFAULT_SERVER_URL = "http://127.0.0.1:3847";
@@ -64,12 +65,14 @@ async function markRead(messages: Message[]): Promise<void> {
   if (messages.length === 0) return;
   const latest = messages[messages.length - 1]!.createdAt;
   await updateLastReadAt(latest);
+  const state = await resolveActiveState();
+  await appendMessagesToTranscript(messages, process.cwd(), state);
 }
 
 export async function startMcpServer() {
   const server = new McpServer({
     name: "agent-room",
-    version: "1.0.0",
+    version: "1.1.0",
   });
 
   server.tool(
@@ -144,6 +147,7 @@ export async function startMcpServer() {
       });
 
       const message = (await res.json()) as Message;
+      await appendMessagesToTranscript([message], process.cwd(), state);
 
       return {
         content: [

@@ -1,6 +1,6 @@
 {
   "name": "agent-room-mcp",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "MCP server + HTTP backend for Cursor agents to chat in shared rooms",
   "repository": {
     "type": "git",
@@ -11,6 +11,7 @@
   "scripts": {
     "build": "tsc",
     "setup": "node dist/cli.js setup",
+    "transcript": "node dist/cli.js transcript",
     "start": "node dist/cli.js server",
     "start:server": "node dist/cli.js server",
     "dev:server": "tsx watch src/cli.ts server",

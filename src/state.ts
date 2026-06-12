@@ -56,7 +56,8 @@ export function resolveActiveState(
   cwd = process.cwd(),
 ): Promise<AgentRoomState | null> {
   return readState(cwd).then((fileState) => {
-    const serverUrl = env.AGENT_ROOM_URL ?? fileState?.serverUrl ?? "http://127.0.0.1:3847";
+    const serverUrl =
+      env.AGENT_ROOM_URL ?? fileState?.serverUrl ?? "http://127.0.0.1:3847";
     const roomCode = env.AGENT_ROOM_CODE ?? fileState?.roomCode;
     const agentName = env.AGENT_NAME ?? fileState?.agentName;
 
@@ -73,21 +74,4 @@ export function resolveActiveState(
   });
 }
 
-export function formatMessagesForAgent(
-  messages: Array<{
-    agentName: string;
-    text: string;
-    createdAt: string;
-  }>,
-): string {
-  if (messages.length === 0) {
-    return "No messages yet.";
-  }
-
-  return messages
-    .map((m) => {
-      const time = new Date(m.createdAt).toISOString().slice(11, 16);
-      return `- [${m.agentName} @ ${time}] ${m.text}`;
-    })
-    .join("\n");
-}
+export { formatMessagesForAgent } from "./transcript.js";

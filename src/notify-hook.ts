@@ -1,5 +1,6 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { getStatePath, formatMessagesForAgent } from "./state.js";
+import { appendMessagesToTranscript } from "./transcript.js";
 import type { AgentRoomState, Message } from "./types.js";
 
 export interface NotifyHookResult {
@@ -7,20 +8,13 @@ export interface NotifyHookResult {
   agent_message?: string;
 }
 
-async function fetchMessages(
-  state: AgentRoomState,
-): Promise<Message[]> {
-  const url = new URL(
-    `/rooms/${state.roomCode}/messages`,
-    state.serverUrl,
-  );
+async function fetchMessages(state: AgentRoomState): Promise<Message[]> {
+  const url = new URL(`/rooms/${state.roomCode}/messages`, state.serverUrl);
   url.searchParams.set("since", state.lastReadAt);
   url.searchParams.set("limit", "50");
 
   const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error(`Failed to fetch messages: ${res.status}`);
-  }
+  if (!res.ok) throw new Error(`Failed to fetch messages: ${res.status}`);
 
   const data = (await res.json()) as { messages: Message[] };
   return data.messages ?? [];
@@ -32,7 +26,6 @@ async function updateStateLastRead(
   messages: Message[],
 ): Promise<void> {
   if (messages.length === 0) return;
-
   const latest = messages[messages.length - 1]!.createdAt;
   state.lastReadAt = latest;
   await writeFile(statePath, JSON.stringify(state, null, 2) + "\n", "utf8");
@@ -49,9 +42,7 @@ export async function runNotifyHook(cwd = process.cwd()): Promise<NotifyHookResu
     return {};
   }
 
-  if (!state.roomCode || !state.serverUrl) {
-    return {};
-  }
+  if (!state.roomCode || !state.serverUrl) return {};
 
   let messages: Message[];
   try {
@@ -60,15 +51,14 @@ export async function runNotifyHook(cwd = process.cwd()): Promise<NotifyHookResu
     return {};
   }
 
-  if (messages.length === 0) {
-    return {};
-  }
+  if (messages.length === 0) return {};
 
+  await appendMessagesToTranscript(messages, cwd, state);
   await updateStateLastRead(statePath, state, messages);
 
   const formatted = formatMessagesForAgent(messages);
   return {
-    user_message: "New message(s) in Agent Room from your teammate.",
-    agent_message: `Teammate agent chat (Agent Room):\n${formatted}\n\nRead these before continuing. Use send_message or read_messages if you need to reply.`,
+    user_message: "New message(s) in Agent Room — see .cursor/agent-room-transcript.md",
+    agent_message: `Teammate agent chat (Agent Room):\n${formatted}\n\nTranscript updated at .cursor/agent-room-transcript.md. Reply with send_message if needed.`,
   };
 }

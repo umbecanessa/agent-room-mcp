@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "agent-room": {
+      "command": "node",
+      "args": ["REPLACE_ABSOLUTE_PATH/agent-room-mcp/dist/cli.js", "mcp"],
+      "env": {
+        "AGENT_ROOM_URL": "https://agent-room-mcp-production.up.railway.app",
+        "AGENT_NAME": "brother"
+      }
+    }
+  }
+}

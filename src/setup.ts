@@ -8,6 +8,7 @@ export interface SetupOptions {
   projectDir?: string;
   createRoom?: boolean;
   installDir?: string;
+  editor?: "cursor" | "gemini" | "vscode-copilot";
 }
 
 function getInstallDir(): string {
@@ -47,6 +48,22 @@ function mcpConfig(installDir: string, opts: SetupOptions) {
   return {
     mcpServers: {
       "agent-room": {
+        command: "node",
+        args: [cliPath(installDir), "mcp"],
+        env: {
+          AGENT_ROOM_URL: opts.serverUrl,
+          AGENT_NAME: opts.agentName,
+        },
+      },
+    },
+  };
+}
+
+function vscodeCopilotConfig(installDir: string, opts: SetupOptions) {
+  return {
+    servers: {
+      "agent-room": {
+        type: "stdio",
         command: "node",
         args: [cliPath(installDir), "mcp"],
         env: {
@@ -143,6 +160,11 @@ function parseArgs(argv: string[]): SetupOptions {
         opts.installDir = next ? resolve(next) : undefined;
         i++;
         break;
+      case "--editor":
+      case "-e":
+        opts.editor = next as SetupOptions["editor"];
+        i++;
+        break;
       case "--help":
       case "-h":
         printHelp();
@@ -163,15 +185,22 @@ Usage:
 Options:
   -n, --name NAME       Your agent display name (required)
   -u, --url URL         HTTP server URL (default: http://127.0.0.1:3847)
-  -p, --project PATH    App repo to install hooks + .cursor/mcp.json
+  -p, --project PATH    App repo (Cursor: writes .cursor/mcp.json + hooks)
+  -e, --editor EDITOR   cursor (default) | gemini | vscode-copilot
   --create-room         Create a room now (server must be running)
   --install PATH        Path to this repo if not auto-detected
   -h, --help            Show this help
 
 Examples:
   node dist/cli.js setup --name umberto --project ../my-app
-  node dist/cli.js setup --name brother --url https://your-app.up.railway.app --create-room
+  node dist/cli.js setup --name brother --editor gemini --url https://your-app.up.railway.app
 `);
+}
+
+async function writeVscodeMcp(projectDir: string, config: unknown): Promise<void> {
+  const mcpPath = join(projectDir, ".vscode", "mcp.json");
+  await mkdir(dirname(mcpPath), { recursive: true });
+  await writeFile(mcpPath, JSON.stringify(config, null, 2) + "\n", "utf8");
 }
 
 export async function runSetup(argv: string[]): Promise<void> {
@@ -209,9 +238,24 @@ export async function runSetup(argv: string[]): Promise<void> {
     console.log("Share this code with your teammate.\n");
   }
 
+  const editor = opts.editor ?? "cursor";
   const mcp = mcpConfig(installDir, opts);
 
-  if (opts.projectDir) {
+  if (editor === "gemini") {
+    console.log("--- Gemini Code Assist: merge into ~/.gemini/settings.json ---\n");
+    console.log(JSON.stringify(mcp, null, 2));
+    console.log("\nThen: Reload Window → Agent mode → /mcp to verify");
+    console.log("See docs/INSTALL-VSCODE-GEMINI.md (no Cursor hooks on VS Code)\n");
+  } else if (editor === "vscode-copilot") {
+    const copilot = vscodeCopilotConfig(installDir, opts);
+    if (opts.projectDir) {
+      await writeVscodeMcp(opts.projectDir, copilot);
+      console.log(`✓ Wrote ${join(opts.projectDir, ".vscode", "mcp.json")}\n`);
+    } else {
+      console.log("--- VS Code Copilot: .vscode/mcp.json ---\n");
+      console.log(JSON.stringify(copilot, null, 2));
+    }
+  } else if (opts.projectDir) {
     await writeProjectMcp(opts.projectDir, mcp);
     await mergeHooks(opts.projectDir, installDir);
     console.log(`✓ Wrote ${join(opts.projectDir, ".cursor", "mcp.json")}`);
@@ -226,7 +270,13 @@ export async function runSetup(argv: string[]): Promise<void> {
   }
 
   console.log("--- Next steps ---");
-  console.log("1. Restart Cursor (or reload MCP)");
+  if (editor === "cursor") {
+    console.log("1. Restart Cursor (or reload MCP)");
+  } else if (editor === "gemini") {
+    console.log("1. Reload VS Code, enable Gemini Agent mode");
+  } else {
+    console.log("1. Reload VS Code, open Copilot agent chat");
+  }
   console.log("2. Ask your agent: \"Create an agent room\" (or join with the code below)");
   if (roomCode) {
     console.log(`3. Room code to share: ${roomCode}`);

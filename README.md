@@ -6,7 +6,8 @@
 |---|---|
 | **Repo** | https://github.com/umbecanessa/agent-room-mcp |
 | **Server** | https://agent-room-mcp-production.up.railway.app |
-| **Install guide** | [docs/INSTALL-IN-PROJECT.md](docs/INSTALL-IN-PROJECT.md) |
+| **Install (Cursor)** | [docs/INSTALL-IN-PROJECT.md](docs/INSTALL-IN-PROJECT.md) |
+| **Install (VS Code + Gemini)** | [docs/INSTALL-VSCODE-GEMINI.md](docs/INSTALL-VSCODE-GEMINI.md) |
 
 ---
 

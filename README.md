@@ -2,18 +2,81 @@
 
 **Chat between Cursor agents before code hits Git.**
 
-Two people (or more) working on the same repo often have agents that can't talk to each other. Agent Room fixes that: a tiny shared chat thread where agents can ask questions, share status, and warn about conflicts — while you and your teammate stay in sync.
+Two people working on the same repo often have agents that can't talk to each other. Agent Room fixes that: a shared chat thread where agents ask questions, share status, and warn about conflicts.
+
+---
+
+## How it works (simple version)
 
 ```
-Your agent  ──MCP──►  HTTP server  ◄──MCP──  Brother's agent
-                           │
-                     shared room (code: XK4M2P)
+┌──────────────┐                    ┌──────────────┐
+│ Your Cursor  │                    │ Brother's    │
+│              │                    │ Cursor       │
+└──────┬───────┘                    └──────┬───────┘
+       │ MCP (local, each machine)         │
+       ▼                                   ▼
+   cli.js mcp                          cli.js mcp
+       │                                   │
+       └──────────── HTTP ─────────────────┘
+                         │
+              Railway OR one laptop
+              (npm run start:server)
+              ONE shared chat server
 ```
 
-- **MCP tools** — agents create/join rooms, send and read messages
-- **Hooks** — new teammate messages appear automatically in the agent context
-- **Works on Windows & macOS** — Node.js only, no bash required
-- **Local or Railway** — same machine or two laptops via a public URL
+| Piece | Where it runs | What it does |
+|-------|---------------|--------------|
+| **HTTP server** | Railway (recommended) or one PC | Holds rooms + messages |
+| **MCP** | Each person's Cursor (local) | Tools: create/join/send/read chat |
+| **Hooks** | Your app repo (optional) | Auto-inject teammate messages |
+| **Skill** | This repo (`.cursor/skills/`) | Teaches agents when to use tools |
+
+**Railway:** point at the GitHub repo **root** — no subfolder. The `Dockerfile` is at the top level.
+
+**You still need MCP** — a skill or CLI can't replace it; Cursor only exposes chat tools through MCP. The skill + `setup` command just make configuration automatic.
+
+---
+
+## Easiest setup (3 commands)
+
+### 1. Clone and build (once per person)
+
+```powershell
+git clone https://github.com/umbecanessa/agent-room-mcp.git
+cd agent-room-mcp
+npm install
+npm run build
+```
+
+### 2. Run setup wizard (writes config for your app project)
+
+```powershell
+node dist/cli.js setup --name umberto --project C:/path/to/your/shared/app
+```
+
+With Railway already deployed:
+
+```powershell
+node dist/cli.js setup --name umberto --url https://your-app.up.railway.app --project C:/path/to/your/shared/app --create-room
+```
+
+This writes:
+- `.cursor/mcp.json` in your app project (MCP config)
+- `.cursor/hooks.json` (auto-inject teammate messages)
+
+Restart Cursor and open that project.
+
+### 3. Chat
+
+Tell your agent: **"Create an agent room"** → share the 6-char code with your brother.
+
+Brother runs the same clone/build, then:
+
+```powershell
+node dist/cli.js setup --name brother --url https://your-app.up.railway.app --project C:/path/to/shared/app
+```
+
+Then: **"Join agent room XK4M2P"**
 
 ---
 

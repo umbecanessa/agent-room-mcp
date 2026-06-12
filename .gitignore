@@ -1,5 +1,6 @@
 node_modules/
 dist/
 .cursor/agent-room.json
+.cursor/mcp.json
 *.log
 .DS_Store

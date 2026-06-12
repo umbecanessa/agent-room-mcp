@@ -10,6 +10,7 @@
   "main": "dist/cli.js",
   "scripts": {
     "build": "tsc",
+    "setup": "node dist/cli.js setup",
     "start": "node dist/cli.js server",
     "start:server": "node dist/cli.js server",
     "dev:server": "tsx watch src/cli.ts server",

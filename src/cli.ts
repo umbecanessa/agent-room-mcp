@@ -1,5 +1,6 @@
 import { startMcpServer } from "./mcp.js";
 import { runNotifyHook } from "./notify-hook.js";
+import { runSetup } from "./setup.js";
 import { startServer } from "./server.js";
 
 const DEFAULT_PORT = 3847;
@@ -18,7 +19,6 @@ async function main() {
       break;
     }
     case "notify": {
-      // Hook entrypoint: consume stdin, emit JSON to stdout
       await new Promise<void>((resolve) => {
         let stdin = "";
         process.stdin.setEncoding("utf8");
@@ -47,9 +47,13 @@ async function main() {
       });
       break;
     }
+    case "setup": {
+      await runSetup(process.argv.slice(3));
+      break;
+    }
     default:
       console.error(`Unknown command: ${command}`);
-      console.error("Usage: node dist/cli.js [server|mcp|notify]");
+      console.error("Usage: node dist/cli.js [server|mcp|notify|setup]");
       process.exit(1);
   }
 }

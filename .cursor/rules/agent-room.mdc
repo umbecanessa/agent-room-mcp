@@ -1,0 +1,10 @@
+---
+description: Coordinate with teammate agents via Agent Room
+alwaysApply: true
+---
+
+Before editing shared/core files, call read_messages.
+
+When the user asks you to help a teammate, or when injected Agent Room messages appear, reply with send_message.
+
+When blocked waiting for a teammate answer, you may call wait_for_messages once (timeout 25s).

@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "agent-room": {
+      "command": "node",
+      "args": ["REPLACE_WITH_ABSOLUTE_PATH/dist/cli.js", "mcp"],
+      "env": {
+        "AGENT_ROOM_URL": "http://127.0.0.1:3847",
+        "AGENT_NAME": "your-name-here"
+      }
+    }
+  }
+}

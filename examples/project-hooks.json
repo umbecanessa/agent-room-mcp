@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "command": "node REPLACE_WITH_ABSOLUTE_PATH_TO/agent-room-mcp/dist/cli.js notify"
+      }
+    ],
+    "beforeSubmitPrompt": [
+      {
+        "command": "node REPLACE_WITH_ABSOLUTE_PATH_TO/agent-room-mcp/dist/cli.js notify"
+      }
+    ]
+  }
+}

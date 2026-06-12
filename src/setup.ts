@@ -8,7 +8,7 @@ export interface SetupOptions {
   projectDir?: string;
   createRoom?: boolean;
   installDir?: string;
-  editor?: "cursor" | "gemini" | "vscode-copilot";
+  editor?: "cursor" | "gemini" | "claude" | "vscode-copilot";
 }
 
 function getInstallDir(): string {
@@ -48,6 +48,22 @@ function mcpConfig(installDir: string, opts: SetupOptions) {
   return {
     mcpServers: {
       "agent-room": {
+        command: "node",
+        args: [cliPath(installDir), "mcp"],
+        env: {
+          AGENT_ROOM_URL: opts.serverUrl,
+          AGENT_NAME: opts.agentName,
+        },
+      },
+    },
+  };
+}
+
+function claudeMcpConfig(installDir: string, opts: SetupOptions) {
+  return {
+    mcpServers: {
+      "agent-room": {
+        type: "stdio",
         command: "node",
         args: [cliPath(installDir), "mcp"],
         env: {
@@ -186,15 +202,20 @@ Options:
   -n, --name NAME       Your agent display name (required)
   -u, --url URL         HTTP server URL (default: http://127.0.0.1:3847)
   -p, --project PATH    App repo (Cursor: writes .cursor/mcp.json + hooks)
-  -e, --editor EDITOR   cursor (default) | gemini | vscode-copilot
+  -e, --editor EDITOR   cursor (default) | claude | gemini | vscode-copilot
   --create-room         Create a room now (server must be running)
   --install PATH        Path to this repo if not auto-detected
   -h, --help            Show this help
 
 Examples:
   node dist/cli.js setup --name umberto --project ../my-app
-  node dist/cli.js setup --name brother --editor gemini --url https://your-app.up.railway.app
+  node dist/cli.js setup --name brother --editor claude --url https://your-app.up.railway.app
 `);
+}
+
+async function writeProjectDotMcp(projectDir: string, config: unknown): Promise<void> {
+  const mcpPath = join(projectDir, ".mcp.json");
+  await writeFile(mcpPath, JSON.stringify(config, null, 2) + "\n", "utf8");
 }
 
 async function writeVscodeMcp(projectDir: string, config: unknown): Promise<void> {
@@ -246,6 +267,18 @@ export async function runSetup(argv: string[]): Promise<void> {
     console.log(JSON.stringify(mcp, null, 2));
     console.log("\nThen: Reload Window → Agent mode → /mcp to verify");
     console.log("See docs/INSTALL-VSCODE-GEMINI.md (no Cursor hooks on VS Code)\n");
+  } else if (editor === "claude") {
+    const claude = claudeMcpConfig(installDir, opts);
+    if (opts.projectDir) {
+      await writeProjectDotMcp(opts.projectDir, claude);
+      console.log(`✓ Wrote ${join(opts.projectDir, ".mcp.json")}\n`);
+      console.log("Commit .mcp.json for team, or gitignore if paths are machine-specific.\n");
+    } else {
+      console.log("--- Claude Code: .mcp.json in project root (or ~/.claude/settings.json) ---\n");
+      console.log(JSON.stringify(claude, null, 2));
+    }
+    console.log("Or: claude mcp add agent-room --scope project -- node .../dist/cli.js mcp");
+    console.log("See docs/INSTALL-VSCODE-CLAUDE.md\n");
   } else if (editor === "vscode-copilot") {
     const copilot = vscodeCopilotConfig(installDir, opts);
     if (opts.projectDir) {
@@ -274,7 +307,9 @@ export async function runSetup(argv: string[]): Promise<void> {
     console.log("1. Restart Cursor (or reload MCP)");
   } else if (editor === "gemini") {
     console.log("1. Reload VS Code, enable Gemini Agent mode");
-  } else {
+  } else if (editor === "claude") {
+    console.log("1. Reload VS Code, open Claude Code panel, verify /mcp");
+  } else if (editor === "vscode-copilot") {
     console.log("1. Reload VS Code, open Copilot agent chat");
   }
   console.log("2. Ask your agent: \"Create an agent room\" (or join with the code below)");
